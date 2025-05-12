@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Socratic Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/kute.js/2.0.0/kute.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mo-js/0.288.2/mo.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tilt.js/1.2.1/tilt.jquery.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --primary-light: #e8f0fe;
+            --secondary-color: #6c757d;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --chat-user-bg: #e3f2fd;
+            --chat-user-text: #0d47a1;
+            --chat-bot-bg: #ffffff;
+            --chat-bot-text: #333333;
+            --bot-border: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --gradient-primary: linear-gradient(135deg, #4a6fa5 0%, #4895ef 100%);
+            --gradient-accent: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark-color);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .threejs-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .header-content {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-content::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(74, 111, 165, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            animation: rotate 30s linear infinite;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            position: relative;
+            display: inline-block;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .input-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .input-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .input-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.3;
+            z-index: -1;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .input-group p {
+            color: var(--secondary-color);
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: none;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3));
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .nav-btn:hover::before {
+            opacity: 1;
+        }
+
+        .nav-btn:nth-child(1) {
+            background: var(--gradient-primary);
+        }
+
+        .nav-btn:nth-child(2) {
+            background: linear-gradient(45deg, #4cc9f0, #4895ef);
+        }
+
+        .nav-btn:nth-child(3) {
+            background: linear-gradient(45deg, #f72585, #b5179e);
+        }
+
+        .nav-btn:nth-child(4) {
+            background: linear-gradient(45deg, #3a0ca3, #4361ee);
+        }
+
+        .nav-btn:nth-child(5) {
+            background: linear-gradient(45deg, #f8961e, #f3722c);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .results-section {
+            width: 100%;
+            display: none;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .results-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            color: var(--primary-color);
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .results-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--gradient-primary);
+            border-radius: 3px;
+        }
+
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            width: 100%;
+        }
+
+        .pattern-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.8rem;
+            transition: var(--transition);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pattern-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: var(--gradient-primary);
+        }
+
+        .pattern-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .pattern-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 1.2rem;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .pattern-card p {
+            flex-grow: 1;
+            color: var(--secondary-color);
+            line-height: 1.7;
+        }
+
+        .pattern-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: 50%;
+            margin-right: 0.8rem;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            margin-top: auto;
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+        }
+
+        /* Animation classes */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .tagline {
+                font-size: 1rem;
+            }
+
+            .input-card {
+                padding: 1.5rem;
+            }
+
+            .pattern-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-buttons {
+                gap: 1rem;
+            }
+
+            .nav-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="threejs-container" id="threejs-container"></div>
+
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1><i class="fas fa-robot"></i> AI Socratic Tutor</h1>
+                <p class="tagline">Enhancing Critical Thinking Through Adaptive Conversational Learning</p>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="input-card" id="input-card">
+                <div class="input-group">
+                    <p>The AI Socratic Tutor is a smart, conversation-based learning tool that brings a fresh and interactive approach to education. Inspired by the ancient Socratic method of teaching—where teachers ask guiding questions instead of giving direct answers—this tutor helps students think deeply, ask better questions, and figure things out on their own.</p>
+
+                    <p>Instead of simply handing out solutions, it holds a two-way conversation with learners, helping them explore the why and how behind each topic. Whether it's solving a math problem, understanding a science concept, or writing a piece of code, the AI Tutor encourages students to think critically and reason their way through challenges.</p>
+                </div>
+
+                <div class="nav-buttons">
+                <a href="/login" title="Login">
+                    <button class="nav-btn floating" style="animation-delay: 0.1s">
+                        <i class="fas fa-sign-in-alt"></i>
+                    </button>
+                </a>
+                <a href="/signup" title="Signup">
+                    <button class="nav-btn floating" style="animation-delay: 0.2s">
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                </a>
+            </div>
+
+            </div>
+
+            <div class="results-section" id="results-section">
+                <h2 class="results-title">Generated Socratic Questions</h2>
+                <div class="pattern-grid" id="pattern-grid">
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Three.js
+            initThreeJS();
+
+            // Initialize navigation buttons
+            initNavButtons();
+
+            // Add tilt effect to input card
+            $('#input-card').tilt({
+                maxTilt: 5,
+                perspective: 1500,
+                glare: true,
+                maxGlare: 0.1
+            });
+
+            // Simulate generating questions after 2 seconds
+            setTimeout(() => {
+                generateSocraticQuestions();
+            }, 2000);
+        });
+
+        function initThreeJS() {
+            const container = document.getElementById('threejs-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // Create scene
+            const scene = new THREE.Scene();
+            scene.background = null;
+
+            // Create camera
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 5;
+
+            // Create renderer
+            const renderer = new THREE.WebGLRenderer({
+                alpha: true,
+                antialias: true
+            });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+
+            // Create floating geometric shapes
+            const geometry = new THREE.IcosahedronGeometry(0.5, 1);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0x4a6fa5,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+
+            const shapes = [];
+            const colors = [0x4a6fa5, 0x4895ef, 0x4cc9f0, 0xf72585, 0x3a0ca3];
+
+            // Create multiple shapes
+            for (let i = 0; i < 5; i++) {
+                const shape = new THREE.Mesh(geometry, material.clone());
+                shape.material.color.setHex(colors[i]);
+                shape.position.x = (Math.random() - 0.5) * 10;
+                shape.position.y = (Math.random() - 0.5) * 10;
+                shape.position.z = (Math.random() - 0.5) * 10;
+                shapes.push(shape);
+                scene.add(shape);
+            }
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+
+                shapes.forEach((shape, i) => {
+                    shape.rotation.x += 0.001 * (i + 1);
+                    shape.rotation.y += 0.0015 * (i + 1);
+
+                    // Gentle floating movement
+                    shape.position.y += Math.sin(Date.now() * 0.001 + i) * 0.002;
+                });
+
+                renderer.render(scene, camera);
+            }
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            });
+
+            animate();
+        }
+
+        function initNavButtons() {
+            document.querySelectorAll('.nav-btn').forEach((btn, index) => {
+                btn.addEventListener('click', () => {
+                    // Create burst animation on click
+                    createBurstAnimation(btn);
+
+                    // Visual feedback
+                    btn.classList.add('pulse');
+                    setTimeout(() => btn.classList.remove('pulse'), 1000);
+
+                    // In a real app, this would navigate to different sections
+                    console.log(`Navigating to ${btn.title}`);
+                });
+            });
+        }
+
+        function createBurstAnimation(element) {
+            const rect = element.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            const color = window.getComputedStyle(element).backgroundImage;
+
+            const burst = new mojs.Burst({
+                parent: document.body,
+                radius: { 20: 100 },
+                count: 8,
+                x: x,
+                y: y,
+                children: {
+                    shape: 'circle',
+                    fill: color.includes('4a6fa5') ? '#4a6fa5' :
+                          color.includes('4cc9f0') ? '#4cc9f0' :
+                          color.includes('f72585') ? '#f72585' :
+                          color.includes('3a0ca3') ? '#3a0ca3' : '#f8961e',
+                    radius: 10,
+                    duration: 1500,
+                    easing: 'quad.out'
+                }
+            }).play();
+        }
+
+        function generateSocraticQuestions() {
+            const questions = [
+                "What assumptions underlie this statement?",
+                "How might someone with a different perspective view this?",
+                "What evidence supports or contradicts this idea?",
+                "What are the implications if this is true?",
+                "How does this concept connect to what we already know?",
+                "What alternative explanations might exist?",
+                "What would be a counter-argument to this position?",
+                "How might this idea be applied in a real-world context?"
+            ];
+
+            const patternGrid = document.getElementById('pattern-grid');
+            patternGrid.innerHTML = '';
+
+            const colors = ['#4a6fa5', '#4895ef', '#4cc9f0', '#f72585', '#3a0ca3', '#4a6fa5', '#4895ef', '#4cc9f0'];
+
+            questions.forEach((question, index) => {
+                const card = document.createElement('div');
+                card.className = 'pattern-card fade-in';
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.innerHTML = `
+                    <h3><span class="pattern-number">${index + 1}</span>Question Pattern</h3>
+                    <p>${question}</p>
+                `;
+                patternGrid.appendChild(card);
+
+                // Add tilt effect to each card
+                $(card).tilt({
+                    maxTilt: 8,
+                    perspective: 1500,
+                    glare: true,
+                    maxGlare: 0.1
+                });
+            });
+
+            // Show results section with animation
+            const resultsSection = document.getElementById('results-section');
+            resultsSection.style.display = 'block';
+
+            // Animate the appearance
+            setTimeout(() => {
+                resultsSection.style.opacity = '1';
+                resultsSection.style.transform = 'translateY(0)';
+            }, 100);
+
+            // Scroll to results
+            setTimeout(() => {
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }, 500);
+        }
+    </script>
+</body>
+</html>

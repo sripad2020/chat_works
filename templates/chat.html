@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --primary-light: #e8f0fe;
+            --secondary-color: #6c757d;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --chat-user-bg: #e3f2fd;
+            --chat-user-text: #0d47a1;
+            --chat-bot-bg: #ffffff;
+            --chat-bot-text: #333333;
+            --bot-border: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            height: 700px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(0);
+            opacity: 1;
+            transition: var(--transition);
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .header {
+            background-color: white;
+            color: var(--primary-color);
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            z-index: 10;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .header h2 {
+            font-weight: 600;
+            font-size: 1.5rem;
+            margin: 0;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .header i {
+            color: var(--primary-color);
+        }
+
+        .question-buttons {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 10px;
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 5;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .question-button {
+            padding: 10px 15px;
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 90px;
+        }
+
+        .question-button:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .question-button:active {
+            transform: translateY(0);
+        }
+
+        .question-button i {
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .question-sidebar {
+            width: 300px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .question-category {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        .question-category h4 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .question-category h4 i {
+            margin-right: 8px;
+            font-size: 0.9em;
+        }
+
+        .question-category ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .question-category li {
+            padding: 8px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        .question-category li:hover {
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .question-category li:last-child {
+            border-bottom: none;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            background-color: #f9f9f9;
+        }
+
+        .message {
+            max-width: 90%;
+            padding: 15px 20px;
+            margin: 10px 0;
+
+
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: messageAppear 0.3s ease-out forwards;
+            font-size: 1rem;
+
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background-color: var(--chat-bot-bg);
+            color: var(--chat-bot-text);
+            border: 1px solid var(--bot-border);
+            border-radius: 0 18px 18px 18px;
+            animation-delay: 0.1s;
+            position: relative;
+            padding: 15px 20px 15px 50px;
+            margin-right: 50px;
+        }
+
+        .bot-message::before {
+            content: '\f061';
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            width: 24px;
+            height: 24px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 12px;
+            padding-left: 1px;
+        }
+
+        .bot-message p {
+            margin-bottom: 10px;
+        }
+
+        .bot-message p:last-child {
+            margin-bottom: 0;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            color: var(--chat-user-text);
+            animation-delay: 0.1s;
+            font-size: 1.05rem;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-left: 50px;
+            padding: 15px 20px;
+
+        }
+
+        .message-time {
+            display: block;
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .user-message .message-time {
+            color: rgba(13, 71, 161, 0.7);
+        }
+
+        .bot-message .message-time {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .input-area {
+            display: flex;
+            padding: 15px;
+            background-color: white;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50px;
+            outline: none;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background-color: #f9f9f9;
+        }
+
+        #user-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(72, 149, 239, 0.2);
+            background-color: white;
+        }
+
+        #submit-button {
+            margin-left: 15px;
+            padding: 0;
+            width: 50px;
+            height: 50px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(67, 97, 238, 0.4);
+        }
+
+        #submit-button:active {
+            transform: translateY(0);
+        }
+
+        #submit-button i {
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+
+        #submit-button:hover i {
+            transform: scale(1.1);
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: var(--chat-bot-bg);
+            border-radius: 18px;
+            margin: 8px 0;
+            align-self: flex-start;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transform: scale(0);
+            transition: var(--transition);
+            max-width: 70px;
+            border: 1px solid var(--bot-border);
+        }
+
+        .typing-indicator.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes messageAppear {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .content-area {
+                flex-direction: column;
+            }
+
+            .question-sidebar {
+                width: 100%;
+                height: 200px;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+
+            .question-buttons {
+                gap: 8px;
+            }
+
+            .question-button {
+                min-width: auto;
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+
+            .message {
+                max-width: 90%;
+                padding: 15px;
+                font-size: 0.95rem;
+            }
+
+            .bot-message {
+                padding-left: 45px;
+                margin-right: 20px;
+            }
+
+            .bot-message::before {
+                left: 12px;
+                width: 20px;
+                height: 20px;
+                font-size: 10px;
+            }
+
+            .user-message {
+                font-size: 1rem;
+            }
+        }
+        .header-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.header-button {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.header-button:hover {
+    background-color: var(--primary-light);
+    transform: scale(1.1);
+}
+
+.header-button:active {
+    transform: scale(0.95);
+}
+
+.header h2 {
+    margin: 0;
+    flex-grow: 1;
+    text-align: center;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+                <div class="header-buttons">
+                    <button class="header-button" onclick="window.location.href='/'">
+                        <i class="fas fa-home"></i>
+                    </button>
+                    <h2><i class="fas fa-robot"></i> Hello Agent</h2>
+                    <button class="header-button" onclick="window.location.href='/logout'">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+        </div>
+
+        <div class="content-area">
+            <div class="question-sidebar">
+                <div class="question-category">
+                    <h4><i class="fas fa-question"></i> What Questions</h4>
+                    <ul id="what-questions"></ul>
+                </div>
+                <div class="question-category">
+                    <h4><i class="fas fa-map-marker-alt"></i> Where Questions</h4>
+                    <ul id="where-questions"></ul>
+                </div>
+                <div class="question-category">
+                    <h4><i class="fas fa-clock"></i> When Questions</h4>
+                    <ul id="when-questions"></ul>
+                </div>
+                <div class="question-category">
+                    <h4><i class="fas fa-lightbulb"></i> Why Questions</h4>
+                    <ul id="why-questions"></ul>
+                </div>
+                <div class="question-category">
+                    <h4><i class="fas fa-user"></i> Who Questions</h4>
+                    <ul id="who-questions"></ul>
+                </div>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-area" id="chat-area">
+                    <div class="bot-message message">
+                        <p>Hello! I'm your question assistant. Ask me anything or click the buttons above to generate specific types of questions.</p>
+                        <span class="message-time">Just now</span>
+                    </div>
+                    <div class="typing-indicator" id="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+
+                <div class="input-area">
+                    <input type="text" id="user-input" placeholder="Type your message here..." autocomplete="off">
+                    <button id="submit-button" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Track the last user message for question generation
+        let lastUserMessage = '';
+
+        // Generate question based on type (what, where, when, why, who)
+        function generateQuestion(type) {
+            let question = '';
+            const topic = lastUserMessage || 'this topic';
+
+            switch(type) {
+                case 'what':
+                    question = `What is ${topic}?`;
+                    break;
+                case 'where':
+                    question = `Where can I find ${topic}?`;
+                    break;
+                case 'when':
+                    question = `When is ${topic} relevant?`;
+                    break;
+                case 'why':
+                    question = `Why is ${topic} important?`;
+                    break;
+                case 'who':
+                    question = `Who is involved with ${topic}?`;
+                    break;
+                default:
+                    question = `Tell me more about ${topic}`;
+            }
+
+            // Set the question in the input field
+            document.getElementById('user-input').value = question;
+            // Focus on the input field
+            document.getElementById('user-input').focus();
+        }
+
+        // Display questions in their respective categories
+        function displayQuestions(questions) {
+            const displayQuestion = (id, questions) => {
+                const ul = document.getElementById(id);
+                ul.innerHTML = '';
+                questions.forEach(q => {
+                    const li = document.createElement('li');
+                    li.textContent = q;
+                    li.onclick = () => {
+                        document.getElementById('user-input').value = q;
+                        document.getElementById('user-input').focus();
+                    };
+                    ul.appendChild(li);
+                });
+            };
+
+            displayQuestion('what-questions', questions.what || []);
+            displayQuestion('where-questions', questions.where || []);
+            displayQuestion('when-questions', questions.when || []);
+            displayQuestion('why-questions', questions.why || []);
+            displayQuestion('who-questions', questions.who || []);
+        }
+
+        // Add a message from the bot to the chat area
+        function addBotMessage(message) {
+            const chatArea = document.getElementById('chat-area');
+            const typingIndicator = document.getElementById('typing-indicator');
+
+            // Show typing indicator first
+            typingIndicator.classList.add('active');
+
+            // Remove typing indicator after delay and show message
+            setTimeout(() => {
+                typingIndicator.classList.remove('active');
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'bot-message message';
+
+                // Format the message with paragraphs if it contains newlines
+                const formattedMessage = message.replace(/\n/g, '</p><p>');
+                messageDiv.innerHTML = `<p>${formattedMessage}</p><span class="message-time">${getCurrentTime()}</span>`;
+
+                chatArea.appendChild(messageDiv);
+                chatArea.scrollTop = chatArea.scrollHeight;
+
+                // Add pulse animation to the new message
+                messageDiv.style.animation = 'messageAppear 0.3s ease-out forwards';
+            }, 500);
+        }
+
+        // Add a message from the user to the chat area
+        function addUserMessage(message) {
+            const chatArea = document.getElementById('chat-area');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'user-message message';
+            messageDiv.innerHTML = message + `<span class="message-time">${getCurrentTime()}</span>`;
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            // Store the last user message (remove question marks and trim)
+            lastUserMessage = message.replace('?', '').trim();
+
+            // Add pulse animation to the new message
+            messageDiv.style.animation = 'messageAppear 0.3s ease-out forwards';
+        }
+
+        // Get current time in HH:MM format
+        function getCurrentTime() {
+            const now = new Date();
+            return now.getHours().toString().padStart(2, '0') + ':' +
+                   now.getMinutes().toString().padStart(2, '0');
+        }
+
+        // Process and send user message to Flask backend
+        function sendMessage() {
+            const userInput = document.getElementById('user-input');
+            const message = userInput.value.trim();
+
+            if (message) {
+                addUserMessage(message);
+                userInput.value = '';
+
+                // Show typing indicator
+                const typingIndicator = document.getElementById('typing-indicator');
+                typingIndicator.classList.add('active');
+
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        context: 'general'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    typingIndicator.classList.remove('active');
+                    if (data.response) {
+                        addBotMessage(data.response);
+                    }
+                    if (data.questions) {
+                        displayQuestions(data.questions);
+                    }
+                })
+                .catch(error => {
+                    typingIndicator.classList.remove('active');
+                    addBotMessage("Sorry, there was an error connecting to the server.");
+                    console.error('Error:', error);
+                });
+            }
+        }
+
+        // Allow pressing Enter to send message
+        document.getElementById('user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Input field animation on focus
+        document.getElementById('user-input').addEventListener('focus', function() {
+            this.parentElement.style.boxShadow = '0 0 0 3px rgba(72, 149, 239, 0.2)';
+            this.parentElement.style.transition = 'box-shadow 0.3s ease';
+        });
+
+        document.getElementById('user-input').addEventListener('blur', function() {
+            this.parentElement.style.boxShadow = 'none';
+        });
+
+        // Initial greeting
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                addBotMessage("Welcome! ");
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

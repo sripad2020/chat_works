@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Socratic Tutor - Signup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mo-js/0.288.2/mo.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tilt.js/1.2.1/tilt.jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --primary-light: #e8f0fe;
+            --secondary-color: #6c757d;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --chat-user-bg: #e3f2fd;
+            --chat-user-text: #0d47a1;
+            --chat-bot-bg: #ffffff;
+            --chat-bot-text: #333333;
+            --bot-border: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --gradient-primary: linear-gradient(135deg, #4a6fa5 0%, #4895ef 100%);
+            --gradient-accent: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark-color);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .threejs-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .signup-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 2.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .signup-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .signup-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.3;
+            z-index: -1;
+        }
+
+        .signup-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(74, 111, 165, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            animation: rotate 30s linear infinite;
+        }
+
+        .signup-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        .home-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+
+        .home-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .signup-header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .signup-header p {
+            color: var(--secondary-color);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            color: var(--dark-color);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-color);
+            transition: var(--transition);
+        }
+
+        .input-group input:focus + i {
+            color: var(--primary-color);
+        }
+
+        .password-strength {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .strength-meter {
+            height: 100%;
+            width: 0%;
+            background: var(--warning-color);
+            transition: all 0.3s ease;
+        }
+
+        .error-message {
+            color: var(--warning-color);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 10px 20px rgba(74, 111, 165, 0.3);
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3));
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .btn:hover::before {
+            opacity: 1;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(74, 111, 165, 0.4);
+        }
+
+        .signup-footer {
+            text-align: center;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+        }
+
+        .signup-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .signup-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .terms {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+        }
+
+        .terms input {
+            margin-right: 10px;
+        }
+
+        .terms a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .terms a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        @media (max-width: 576px) {
+            .signup-container {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+
+            .signup-header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="threejs-container" id="threejs-container"></div>
+
+    <div class="signup-container" data-tilt data-tilt-max="5" data-tilt-glare data-tilt-max-glare="0.1">
+        <div class="signup-header">
+            <button class="home-btn floating" onclick="window.location.href='/'">
+                <i class="fas fa-home"></i>
+            </button>
+            <h1>Create Account</h1>
+            <p>Join the AI Socratic Tutor community</p>
+        </div>
+
+        <form id="signupForm" action="/signup" method="POST">
+            <div class="input-group">
+                <input type="text" name="username" placeholder="Username" required>
+                <i class="fas fa-user"></i>
+                <div class="error-message" id="username-error"></div>
+            </div>
+
+            <div class="input-group">
+                <input type="email" name="email" placeholder="Email Address" required>
+                <i class="fas fa-envelope"></i>
+                <div class="error-message" id="email-error"></div>
+            </div>
+
+            <div class="input-group">
+                <input type="password" name="password" id="password" placeholder="Password" required>
+                <i class="fas fa-lock"></i>
+                <div class="password-strength">
+                    <div class="strength-meter" id="strength-meter"></div>
+                </div>
+                <div class="error-message" id="password-error"></div>
+            </div>
+
+            <div class="input-group">
+                <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+                <i class="fas fa-lock"></i>
+                <div class="error-message" id="confirm-error"></div>
+            </div>
+
+            <div class="terms">
+                <input type="checkbox" id="terms" name="terms" required>
+                <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+            </div>
+
+            <button type="submit" class="btn">Sign Up</button>
+
+            <div class="signup-footer">
+                <p>Already have an account? <a href="/login">Sign in</a></p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initThreeJS();
+            $('.signup-container').tilt({
+                maxTilt: 5,
+                perspective: 1500,
+                glare: true,
+                maxGlare: 0.1
+            });
+
+            document.querySelectorAll('.btn, .home-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    createBurstAnimation(this);
+                    this.classList.add('pulse');
+                    setTimeout(() => this.classList.remove('pulse'), 300);
+                });
+            });
+
+            // Password strength meter
+            document.getElementById('password').addEventListener('input', function(e) {
+                const password = e.target.value;
+                const strengthMeter = document.getElementById('strength-meter');
+                let strength = 0;
+
+                if (password.length > 7) strength += 1;
+                if (password.length > 11) strength += 1;
+                if (password.match(/[A-Z]/)) strength += 1;
+                if (password.match(/[a-z]/)) strength += 1;
+                if (password.match(/[0-9]/)) strength += 1;
+                if (password.match(/[^A-Za-z0-9]/)) strength += 1;
+
+                const width = (strength / 5) * 100;
+                strengthMeter.style.width = width + '%';
+
+                if (strength < 2) {
+                    strengthMeter.style.backgroundColor = 'var(--warning-color)';
+                } else if (strength < 4) {
+                    strengthMeter.style.backgroundColor = '#f8961e';
+                } else {
+                    strengthMeter.style.backgroundColor = 'var(--success-color)';
+                }
+            });
+
+            // Form validation
+            document.getElementById('signupForm').addEventListener('submit', function(e) {
+                let valid = true;
+
+                document.querySelectorAll('.error-message').forEach(el => {
+                    el.style.display = 'none';
+                });
+
+                const username = document.getElementsByName('username')[0].value;
+                if (username.length < 3) {
+                    document.getElementById('username-error').textContent = 'Username must be at least 3 characters';
+                    document.getElementById('username-error').style.display = 'block';
+                    valid = false;
+                }
+
+                const email = document.getElementsByName('email')[0].value;
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    document.getElementById('email-error').textContent = 'Please enter a valid email address';
+                    document.getElementById('email-error').style.display = 'block';
+                    valid = false;
+                }
+
+                const password = document.getElementById('password').value;
+                if (password.length < 8) {
+                    document.getElementById('password-error').textContent = 'Password must be at least 8 characters';
+                    document.getElementById('password-error').style.display = 'block';
+                    valid = false;
+                }
+
+                const confirmPassword = document.getElementsByName('confirm_password')[0].value;
+                if (password !== confirmPassword) {
+                    document.getElementById('confirm-error').textContent = 'Passwords do not match';
+                    document.getElementById('confirm-error').style.display = 'block';
+                    valid = false;
+                }
+
+                if (!document.getElementById('terms').checked) {
+                    alert('You must agree to the terms and conditions');
+                    valid = false;
+                }
+
+                if (!valid) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        function initThreeJS() {
+            const container = document.getElementById('threejs-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const scene = new THREE.Scene();
+            scene.background = null;
+
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 5;
+
+            const renderer = new THREE.WebGLRenderer({
+                alpha: true,
+                antialias: true
+            });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+
+            const geometry = new THREE.IcosahedronGeometry(0.5, 1);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0x4a6fa5,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+
+            const shapes = [];
+            const colors = [0x4a6fa5, 0x4895ef, 0x4cc9f0, 0xf72585, 0x3a0ca3];
+
+            for (let i = 0; i < 5; i++) {
+                const shape = new THREE.Mesh(geometry, material.clone());
+                shape.material.color.setHex(colors[i]);
+                shape.position.x = (Math.random() - 0.5) * 10;
+                shape.position.y = (Math.random() - 0.5) * 10;
+                shape.position.z = (Math.random() - 0.5) * 10;
+                shapes.push(shape);
+                scene.add(shape);
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                shapes.forEach((shape, i) => {
+                    shape.rotation.x += 0.001 * (i + 1);
+                    shape.rotation.y += 0.0015 * (i + 1);
+                    shape.position.y += Math.sin(Date.now() * 0.001 + i) * 0.002;
+                });
+                renderer.render(scene, camera);
+            }
+
+            window.addEventListener('resize', function() {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            });
+
+            animate();
+        }
+
+        function createBurstAnimation(element) {
+            const rect = element.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+
+            const burst = new mojs.Burst({
+                parent: document.body,
+                radius: { 20: 100 },
+                count: 8,
+                x: x,
+                y: y,
+                children: {
+                    shape: 'circle',
+                    fill: '#4a6fa5',
+                    radius: 10,
+                    duration: 1500,
+                    easing: 'quad.out'
+                }
+            }).play();
+        }
+    </script>
+</body>
+</html>
