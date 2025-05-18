@@ -14,6 +14,9 @@ app.secret_key="the unique one"
 nltk.download('punkt')
 nltk.download('stopwords')
 
+genai.configure(api_key='AIzaSyCOoAQyClkN6jGPl5iskpU0knbnERA-gVE')
+model = genai.GenerativeModel('gemini-1.5-flash')
+
 def init_db():
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
@@ -233,6 +236,95 @@ def chatting():
                     'who': []
                 }
             }), 500
+
+
+def generate_socratic_response(user_input, conversation_history=None):
+    if conversation_history is None:
+        conversation_history = []
+
+    is_seeking_answer = any(
+        keyword in user_input.lower() for keyword in ["what is", "explain", "define", "how does", "why is"])
+
+    if is_seeking_answer and len(conversation_history) > 1:
+        prompt = f"""
+        The user has been engaged in a Socratic dialogue and now seems to need a clear answer.
+        Their latest input: "{user_input}"
+
+        Conversation history: {conversation_history}
+
+        Provide a **concise, structured answer** that:
+        1. Directly addresses their doubt
+        2. Summarizes key concepts
+        3. Encourages further reflection with a follow-up question
+        4. Avoids unnecessary complexity
+
+        Format: 
+        - **Answer**: [Clear explanation]
+        - **Follow-up**: [One open-ended question]
+        """
+        response = model.generate_content(prompt)
+        return {
+            'response_type': 'answer',
+            'content': response.text.strip()
+        }
+    else:
+        prompt = f"""
+        Act as a Socratic tutor. Your goal is to guide the user toward understanding through questions.
+        User's statement: "{user_input}"
+        Previous conversation: {conversation_history}
+        Generate **one thoughtful question** that:
+        1. Challenges assumptions or explores deeper implications
+        2. Relates to the user's input
+        3. Encourages critical thinking
+        4. Avoids yes/no answers
+        Return only the question.
+        """
+        response = model.generate_content(prompt)
+        return {
+            'response_type': 'question',
+            'content': response.text.strip()
+        }
+
+@app.route('/socratic')
+def soc():
+    return render_template('socratic.html')
+
+@app.route('/socratic-tutor', methods=['POST'])
+def socratic_tutor():
+    if request.method == 'POST':
+        try:
+            data = request.get_json()
+            user_message = data.get('message', '').strip()
+            conversation_history = data.get('history', [])
+
+            if not user_message:
+                return jsonify({
+                    'response_type': 'error',
+                    'content': "Please provide a question or thought to discuss.",
+                    'history': conversation_history
+                }), 400
+
+            response = generate_socratic_response(user_message, conversation_history)
+            conversation_history.append({
+                'user_message': user_message,
+                'bot_response': response['content'],
+                'response_type': response['response_type']
+            })
+
+            return jsonify({
+                'response_type': response['response_type'],
+                'content': response['content'],
+                'history': conversation_history
+            })
+
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            return jsonify({
+                'response_type': 'error',
+                'content': "I encountered an issue. Could you rephrase or elaborate?",
+                'history': conversation_history if 'conversation_history' in locals() else []
+            }), 500
+
 
 @app.route('/logout')
 def logs_out():
