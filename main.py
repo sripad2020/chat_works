@@ -7,18 +7,20 @@ import nltk
 from flask import Flask, render_template, request, redirect, url_for, flash,jsonify,session
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
+
 
 app = Flask(__name__)
-app.secret_key="the unique one"
+app.secret_key = "your-secret-key-here"  # Change this for production
 
-nltk.download('punkt')
-nltk.download('stopwords')
 
 genai.configure(api_key='AIzaSyCOoAQyClkN6jGPl5iskpU0knbnERA-gVE')
 model = genai.GenerativeModel('gemini-1.5-flash')
 
+
+# Database setup
 def init_db():
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect('users.db',check_same_thread=False)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,22 +34,18 @@ def init_db():
 init_db()
 
 
+# Routes
 @app.route('/')
 def home():
-    session.clear()
     return render_template('index.html')
 
-@app.route('/login',methods=['GET','POST'])
-def logs():
-    return render_template('login.html')
-
-@app.route('/log', methods=['POST'])
+@app.route('/log', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
-        conn = sqlite3.connect('users.db')
+        conn = sqlite3.connect('users.db',check_same_thread=False)
         c = conn.cursor()
         c.execute('SELECT * FROM users WHERE email = ?', (email,))
         user = c.fetchone()
@@ -56,18 +54,12 @@ def login():
         if user and check_password_hash(user[3], password):
             session['user_id'] = user[0]
             session['username'] = user[1]
-            session['email']=email
-            flash('Login successful!', 'success')
             return redirect('/chats')
         else:
-            return redirect('/signups')
+            flash('Invalid email or password', 'error')
 
     return render_template('login.html')
 
-
-@app.route('/signups')
-def sign():
-    return render_template('signup.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -77,35 +69,23 @@ def signup():
         password = request.form['password']
         confirm_password = request.form['confirm_password']
 
-        # Basic validation
-        if len(username) < 3:
-            flash('Username must be at least 3 characters', 'error')
-            return redirect(url_for('signup'))
-        if len(password) < 8:
-            flash('Password must be at least 8 characters', 'error')
-            return redirect(url_for('signup'))
         if password != confirm_password:
             flash('Passwords do not match', 'error')
-            return redirect(url_for('signup'))
+            return redirect('/signup')
+        hashed_password = generate_password_hash(password)
 
-        conn = sqlite3.connect('users.db')
-        c = conn.cursor()
-        c.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
-        existing_user = c.fetchone()
-
-        if existing_user:
+        try:
+            conn = sqlite3.connect('users.db',check_same_thread=False)
+            c = conn.cursor()
+            c.execute('INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
+                      (username, email, hashed_password))
+            conn.commit()
             conn.close()
+
+            flash('Account created successfully! Please login.', 'success')
+            return redirect('/log')
+        except sqlite3.IntegrityError:
             flash('Username or email already exists', 'error')
-            return redirect(url_for('signup'))
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        c.execute('INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
-                  (username, email, hashed_password))
-        conn.commit()
-        conn.close()
-
-        flash('Account created successfully! Please log in.', 'success')
-        return redirect('/login')
-
     return render_template('signup.html')
 
 
@@ -117,7 +97,7 @@ def index():
                            where_questions=[],
                            when_questions=[],
                            why_questions=[],
-                           who_questions=[])
+                           who_questions=[],username=session['username'])
 
 
 def convert_paragraph_to_points(paragraph, num_points=5):
@@ -140,7 +120,7 @@ def clean_text(text):
     return re.sub(r'\*\*|\*', '', text)
 
 def save_to_db(user_message, bot_response):
-    conn = sqlite3.connect('chat.db')
+    conn = sqlite3.connect('chat.db',check_same_thread=False)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS chat_history (
@@ -287,7 +267,7 @@ def generate_socratic_response(user_input, conversation_history=None):
 
 @app.route('/socratic')
 def soc():
-    return render_template('socratic.html')
+    return render_template('socratic.html',username=session['username'])
 
 @app.route('/socratic-tutor', methods=['POST'])
 def socratic_tutor():
@@ -319,6 +299,7 @@ def socratic_tutor():
 
         except Exception as e:
             print(f"Error: {str(e)}")
+
             return jsonify({
                 'response_type': 'error',
                 'content': "I encountered an issue. Could you rephrase or elaborate?",
@@ -330,6 +311,31 @@ def socratic_tutor():
 def logs_out():
     session.clear()
     return redirect('/')
+
+@app.template_filter('datetimeformat')
+def datetimeformat(value, format='%Y-%m-%d %H:%M'):
+    if isinstance(value, str):
+        try:
+            value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return value
+    return value.strftime(format)
+
+
+@app.route('/history')
+def chat_history():
+    if 'user_id' not in session:
+        return redirect('/log')
+
+    conn = sqlite3.connect('chat.db',check_same_thread=False)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM chat_history ORDER BY timestamp DESC')
+    chat_history = cursor.fetchall()
+    conn.close()
+
+    return render_template('history.html',
+                           chat_history=chat_history,
+                           username=session['username'])
 
 if __name__ == '__main__':
     app.run(debug=True)

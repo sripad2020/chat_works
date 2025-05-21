@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat History | AI Socratic Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --primary-light: #e8f0fe;
+            --secondary-color: #6c757d;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --chat-user-bg: #e3f2fd;
+            --chat-user-text: #0d47a1;
+            --chat-bot-bg: #ffffff;
+            --chat-bot-text: #333333;
+            --bot-border: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info span {
+            font-weight: 500;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .history-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .history-header {
+            padding: 1rem;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-list {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            transition: var(--transition);
+        }
+
+        .chat-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .chat-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+        }
+
+        .user-message {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--chat-user-text);
+        }
+
+        .bot-response {
+            background: var(--chat-bot-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+            white-space: pre-wrap;
+        }
+
+        .no-history {
+            padding: 2rem;
+            text-align: center;
+            color: var(--secondary-color);
+        }
+
+        .back-btn {
+            margin-top: 2rem;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .chat-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Your Chat History</h1>
+            <div class="user-info">
+                <span>Welcome, {{ username }}</span>
+                <a href="/logout" class="btn">Logout</a>
+            </div>
+        </div>
+
+        <div class="history-container">
+            <div class="history-header">
+                <h2>Previous Conversations</h2>
+                <a href="/chats" class="btn">Back to Chat</a>
+            </div>
+
+            <div class="history-list">
+                {% if chat_history %}
+                    {% for chat in chat_history %}
+                        <div class="chat-item">
+                            <div class="chat-meta">
+                                <span>Question: {{ chat[3] | datetimeformat }}</span>
+                            </div>
+                            <div class="user-message">{{ chat[1] }}</div>
+                            <div class="bot-response">{{ chat[2] }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-history">
+                        <a href="/chats" class="btn back-btn">Start Chatting</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
