@@ -23,6 +23,8 @@
             --bot-border: #e0e0e0;
             --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease;
+            --socratic-color: #8a4fff;
+            --regular-color: #4a6fa5;
         }
 
         * {
@@ -78,11 +80,29 @@
             transition: var(--transition);
             text-decoration: none;
             display: inline-block;
+            font-size: 0.9rem;
         }
 
         .btn:hover {
             background: var(--accent-color);
             transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-socratic {
+            background: var(--socratic-color);
+        }
+
+        .btn-socratic:hover {
+            background: #7b3dff;
         }
 
         .history-container {
@@ -93,7 +113,7 @@
         }
 
         .history-header {
-            padding: 1rem;
+            padding: 1.5rem;
             background: var(--primary-color);
             color: white;
             display: flex;
@@ -101,8 +121,37 @@
             align-items: center;
         }
 
+        .filter-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0 1.5rem;
+            padding-top: 1rem;
+            background: white;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .filter-btn.socratic.active {
+            background: var(--socratic-color);
+            border-color: var(--socratic-color);
+        }
+
         .history-list {
-            max-height: 70vh;
+            max-height: 60vh;
             overflow-y: auto;
         }
 
@@ -124,6 +173,24 @@
             color: var(--secondary-color);
         }
 
+        .conversation-type {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .type-regular {
+            background-color: var(--primary-light);
+            color: var(--regular-color);
+        }
+
+        .type-socratic {
+            background-color: #f3e9ff;
+            color: var(--socratic-color);
+        }
+
         .user-message {
             font-weight: 500;
             margin-bottom: 0.5rem;
@@ -136,17 +203,52 @@
             border-radius: 8px;
             border-left: 4px solid var(--primary-color);
             white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .socratic-response {
+            border-left-color: var(--socratic-color);
         }
 
         .no-history {
-            padding: 2rem;
+            padding: 3rem;
             text-align: center;
             color: var(--secondary-color);
+        }
+
+        .no-history i {
+            font-size: 2rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            opacity: 0.5;
         }
 
         .back-btn {
             margin-top: 2rem;
             display: inline-block;
+        }
+
+        .timestamp {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        /* Scrollbar styling */
+        .history-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .history-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .history-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .history-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
 
         @media (max-width: 768px) {
@@ -164,6 +266,10 @@
                 flex-direction: column;
                 gap: 0.5rem;
             }
+
+            .filter-controls {
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
@@ -173,14 +279,36 @@
             <h1>Your Chat History</h1>
             <div class="user-info">
                 <span>Welcome, {{ username }}</span>
-                <a href="/logout" class="btn">Logout</a>
+                <div class="btn-group">
+                    <a href="/chats" class="btn"><i class="fas fa-comment-alt"></i> New Chat</a>
+                    <a href="/logout" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
             </div>
         </div>
 
         <div class="history-container">
             <div class="history-header">
-                <h2>Previous Conversations</h2>
-                <a href="/chats" class="btn">Back to Chat</a>
+                <h2><i class="fas fa-history"></i> Conversation History</h2>
+                <div>
+                    <span class="timestamp">Last updated: {{ now|datetimeformat }}</span>
+                </div>
+            </div>
+
+            <div class="filter-controls">
+                <button class="filter-btn {% if selected_type == 'all' %}active{% endif %}"
+                        onclick="window.location.href='?type=all'">
+                    All Conversations
+                </button>
+                {% for type in conversation_types %}
+                    <button class="filter-btn {% if selected_type == type %}active{% if type == 'socratic' %} socratic{% endif %}{% endif %}"
+                            onclick="window.location.href='?type={{ type }}'">
+                        {% if type == 'socratic' %}
+                            <i class="fas fa-question-circle"></i> Socratic
+                        {% else %}
+                            <i class="fas fa-comments"></i> {{ type|capitalize }}
+                        {% endif %}
+                    </button>
+                {% endfor %}
             </div>
 
             <div class="history-list">
@@ -188,19 +316,46 @@
                     {% for chat in chat_history %}
                         <div class="chat-item">
                             <div class="chat-meta">
-                                <span>Question: {{ chat[3] | datetimeformat }}</span>
+                                <span class="conversation-type {% if chat[3] == 'socratic' %}type-socratic{% else %}type-regular{% endif %}">
+                                    {% if chat[3] == 'socratic' %}
+                                        <i class="fas fa-question-circle"></i> Socratic
+                                    {% else %}
+                                        <i class="fas fa-comment"></i> {{ chat[3]|capitalize }}
+                                    {% endif %}
+                                </span>
+                                <span class="timestamp"><i class="far fa-clock"></i> {{ chat[4] | datetimeformat }}</span>
                             </div>
-                            <div class="user-message">{{ chat[1] }}</div>
-                            <div class="bot-response">{{ chat[2] }}</div>
+                            <div class="user-message">
+                                <strong><i class="fas fa-user"></i> You:</strong> {{ chat[1] }}
+                            </div>
+                            <div class="bot-response {% if chat[3] == 'socratic' %}socratic-response{% endif %}">
+                                <strong><i class="fas fa-robot"></i> AI:</strong> {{ chat[2] }}
+                            </div>
                         </div>
                     {% endfor %}
                 {% else %}
                     <div class="no-history">
-                        <a href="/chats" class="btn back-btn">Start Chatting</a>
+                        <i class="far fa-comment-dots"></i>
+                        <h3>No conversations yet</h3>
+                        <p>Start chatting to see your history appear here</p>
+                        <a href="/chats" class="btn back-btn"><i class="fas fa-comment-alt"></i> Start Chatting</a>
                     </div>
                 {% endif %}
             </div>
         </div>
     </div>
+
+    <script>
+        // Add animation to chat items when they load
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatItems = document.querySelectorAll('.chat-item');
+            chatItems.forEach((item, index) => {
+                setTimeout(() => {
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+        });
+    </script>
 </body>
 </html>
